@@ -90,3 +90,21 @@ def load_crop_means(fz=None):
     bands = [c for c in m.columns if c.startswith("b_")]
     return Dataset(m[bands].to_numpy(np.float32), m[ELEMENTS].to_numpy(float), m["sample"].to_numpy(),
                    m["crop"].to_numpy(), m["tag"].to_numpy(), fz.wl)
+
+
+def load_record(name, extract_dir=DATA / "ext"):
+    """Crop-mean dataset of another HIDSAG record (MINERAL1, MINERAL2, PORPHYRY) from scripts/extract_hidsag.py.
+
+    Returns (Dataset, variable names). `sample` is the unit of independence: for MINERAL1 the monthly composite
+    (process line + month), shared by its fine, coarse and mixed fractions; otherwise the HIDSAG sample."""
+    fz = Featurizer()
+    X, Y, S, C, T = [], [], [], [], []
+    names = None
+    for f in sorted(Path(extract_dir, name.lower()).glob("*.npz")):
+        d = np.load(f)
+        names = list(d["names"]) if names is None else names
+        tags = str(d["tag"]).split("|")
+        unit = "|".join(tags[:2]) if name.upper() == "MINERAL1" else f.stem.split("_")[0]
+        X.append(fz(d["vnir_mean"], d["swir_mean"])); Y.append(d["y"])
+        S.append(unit); C.append(f.stem); T.append(tags[-1] if tags[-1] else "fine")
+    return Dataset(np.array(X), np.array(Y), np.array(S), np.array(C), np.array(T), fz.wl), names

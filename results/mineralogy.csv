@@ -1,0 +1,7 @@
+route,mean_skill,Al,Si,P,S,K,Ca,Ti,Fe,Cu
+"(A) stoichiometry, uncalibrated",-7.446,-15.547,-10.667,-12.383,-5.660,-3.078,-12.235,-3.084,-1.338,-3.024
+(B) stoichiometry + linear calibration (LOSO),0.076,0.066,-0.049,0.016,0.014,-0.116,0.411,0.081,0.049,0.210
+(C) ridge on predicted visible minerals,0.158,0.138,0.129,0.167,0.014,0.063,0.355,0.213,0.269,0.070
+(C) ridge on all predicted minerals,0.188,0.145,0.134,0.167,0.139,0.068,0.372,0.177,0.347,0.145
+spectra: PCA + ridge (baseline),0.287,0.288,0.112,0.114,0.312,0.332,0.505,0.159,0.489,0.276
+(C) average of spectral model and mineral ridge,0.242,0.241,0.160,0.147,0.190,0.199,0.448,0.217,0.393,0.186

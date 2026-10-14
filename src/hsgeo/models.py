@@ -56,7 +56,8 @@ class PLS(_Scaled):
 
     def fit(self, X, Y, groups):
         Z = self._fit_y(Y)
-        grid = [k for k in self.grid if k < min(X.shape) - 1]
+        # inner folds train on ~3/4 of the rows: keep k below that
+        grid = [k for k in self.grid if k < min(int(0.7 * len(X)), X.shape[1]) - 1]
         self.k = _inner_select(lambda k: PLSRegression(k, scale=True), grid, X, Z, groups)
         self.m = PLSRegression(self.k, scale=True).fit(X, Z)
         return self
@@ -78,7 +79,7 @@ class PCARidge(_Scaled):
 
     def fit(self, X, Y, groups):
         Z = self._fit_y(Y)
-        grid = [p for p in self.grid if p[0] < min(X.shape) - 1]
+        grid = [p for p in self.grid if p[0] < min(int(0.7 * len(X)), X.shape[1]) - 1]
         self.p = _inner_select(self._make, grid, X, Z, groups)
         self.m = self._make(self.p).fit(X, Z)
         return self
@@ -200,3 +201,23 @@ class BestBand:
 
     def predict(self, X):
         return np.stack([np.c_[X[:, b], np.ones(len(X))] @ c for b, c in zip(self.bands, self.coef)], 1)
+
+
+class RidgeCV(_Scaled):
+    """Standardised features + ridge regression, penalty by inner group CV (for low-dimensional features)."""
+    name = "ridge"
+
+    def __init__(self, grid=(0.1, 1.0, 10.0, 100.0, 1000.0)):
+        self.grid = grid
+
+    def _make(self, a):
+        return make_pipeline(StandardScaler(), Ridge(a))
+
+    def fit(self, X, Y, groups):
+        Z = self._fit_y(Y)
+        self.a = _inner_select(self._make, list(self.grid), X, Z, groups)
+        self.m = self._make(self.a).fit(X, Z)
+        return self
+
+    def predict(self, X):
+        return self._unscale(self.m.predict(X))

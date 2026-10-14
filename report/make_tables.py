@@ -107,3 +107,10 @@ if (RES / "grain_size.csv").exists():
                     f"{f(v['skill PCA + ridge'])} & {f(v['skill PLS'])} & {f(v.Ca)} & {f(v.Fe)} & {f(v.Cu)} \\\\")
     write("grain_size", tab("lrrrrrr", r"representation & invariance & \multicolumn{2}{c}{skill} & \multicolumn{3}{c}{PCA + ridge} \\ "
           r"\cmidrule(lr){3-4}\cmidrule(lr){5-7}" "\n& & PCA + ridge & PLS & Ca & Fe & Cu", rows))
+
+# ---------------------------------------------------------------- mineralogy route
+if (RES / "mineralogy.csv").exists():
+    mr = pd.read_csv(RES / "mineralogy.csv")
+    rows = [f"{v.route} & {f(v.mean_skill)} & " + " & ".join(f(v[e]) for e in ["Al", "K", "S", "Ca", "Fe", "Cu"])
+            + " \\\\" for _, v in mr.iterrows() if not v.route.startswith("(A)")]
+    write("mineralogy", tab("lrrrrrrr", "route & skill & Al & K & S & Ca & Fe & Cu", rows))

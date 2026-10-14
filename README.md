@@ -20,6 +20,7 @@ accuracy survives an honest split. The executive report is [`report/report.pdf`]
 | **Published numbers** | The MAPE of 0.02 % for Al reported for GEOCHEM in the HIDSAG paper is two orders of magnitude below anything a sample-wise validation gives (3.1 %; the mean predictor already gives 4.5 %). |
 | **What the camera sees** | Minerals, not elements: Al and K follow the Al-OH band of muscovite at 2205 nm, Ca the molecular-water band at 1935 nm. Cu has no absorption of its own and is predicted through the alteration minerals that accompany it. |
 | **Grain-size models** | Tested: log(1/R), Kubelka-Munk, Aucott, EPO and EMSC fitted on fine/coarse pairs, Hapke radiative transfer. EPO cuts the fine-coarse distance from 2.5x to 0.7x the between-sample distance and lifts PLS from 0.20 to 0.29 (p = 0.01); log(1/R) lifts PCA + ridge to 0.31. Hapke needs calibrated absolute reflectance, which HIDSAG lacks. (`scripts/grain_size.py`) |
+| **Mineralogy route** | Spectra -> minerals learned on HIDSAG MINERAL1 (QEMSCAN; muscovite skill 0.77, biotite 0.65 within that deposit) -> GEOCHEM elements by stoichiometry or as features: skill 0.08-0.19, below the direct route. The mineral model does not transfer between deposits. (`scripts/mineralogy.py`) |
 | **Artefacts** | Grain size changes the absorption depths more than composition does (coarse crops absorb more than fine crops of the same sample by 3.5x the sample-to-sample spread), and up to 16 % of a crop's pixels are the plastic tray. Neither correction improves the model, which is a useful negative result. |
 
 ![skill](figures/skill.png)
@@ -65,6 +66,10 @@ python scripts/run_benchmark.py --patch   # patch level                         
 python scripts/leakage_study.py           # random vs crop-wise vs sample-wise splits             (~25 min)
 python scripts/robustness.py              # grain size, size fractions, tray masking              (~3 min)
 python scripts/mineral_maps.py            # band-depth and cluster maps                           (~30 s)
+
+# mineralogy route: extract MINERAL1 (Figshare, 4.7 GB) the same way
+python scripts/extract_hidsag.py <path>/MINERAL1 data/ext/mineral1
+python scripts/mineralogy.py              # spectra -> minerals -> elements                      (~2 min)
 cd report && make                         # tables from results/ and the PDF
 ```
 

@@ -36,7 +36,8 @@ honest test is on samples the model has never seen. Under this test, a principal
 mean spectrum of each image reduces the error of the trivial mean predictor by \SI{29}{\percent} on average over the
 nine major elements, and by about half for Ca and Fe; a 1D convolutional network does worse than this linear model.
 The camera sees minerals, not elements: Al and K follow the Al--OH absorption of muscovite, Ca the molecular-water
-band, and Cu is predicted through its association with alteration minerals. Grain size changes the absorption
+band, and Cu is predicted through its association with alteration minerals. A two-step route through mineralogy
+learned on another HIDSAG subset does not transfer between deposits. Grain size changes the absorption
 depths more than composition does. The near-perfect accuracy published for this data set cannot be reproduced with
 any split of the data that we tried. Code and data: \citet{Repo}.
 \end{abstract}
@@ -286,6 +287,52 @@ skill collapses when the assumed reflectance level changes by \SI{20}{\percent}.
 \end{table}
 
 % =====================================================================================================================
+\section{Mineralogy as an intermediate step}\label{sec:mineralogy}
+
+Since the camera sees minerals, a natural alternative to the direct regression is a two-step route: spectra
+$\to$ minerals $\to$ elements. GEOCHEM has no mineralogical labels, but the HIDSAG subset MINERAL1 has, imaged
+with the same cameras: 99 crops of 36 monthly composites of mill feed from a porphyry Cu--Mo deposit in the central
+Andes, each size fraction analysed by QEMSCAN for 33 mineral classes \citep{Ehrenfeld2023}. The brightness level
+differs between the HIDSAG campaigns (MINERAL2 is about \SI{25}{\percent} brighter than GEOCHEM, PORPHYRY twice as
+bright), so only the shape of the spectra (SNV) is transferred.
+
+\paragraph{Spectra to minerals.} Within MINERAL1, leaving out whole composites (all size fractions of a month and a
+process line), PLS predicts the SWIR-active minerals well: muscovite/sericite (skill 0.77), biotite (0.65), chlorite
+(0.60), quartz (0.56), K-feldspar (0.48), anhydrite/gypsum (0.36); sulfides and the minor phases are not
+predictable. The smaller subset MINERAL2 (20 samples, X-ray diffraction) gave no useful model.
+
+\paragraph{Minerals to elements.} The model trained on all of MINERAL1 predicts the mineralogy of every GEOCHEM
+crop without using GEOCHEM labels, so the predicted minerals are external features and the leave-one-sample-out
+test stays clean. Three routes were tested (\cref{tab:mineralogy}): (A) stoichiometry from ideal mineral formulas,
+without any GEOCHEM label; (B) the same with a linear calibration per element, fitted leave-one-sample-out; (C) the
+predicted minerals as features of a ridge regression, alone and averaged with the direct spectral model.
+
+None of them reaches the direct route. Uncalibrated stoichiometry is off by large factors in both directions (Ca
+\SI{4.4}{\percent} predicted against \SI{0.9}{\percent} measured, P \SI{0.04}{\percent} against
+\SI{0.54}{\percent}), both because the transferred mineralogy is
+implausible (\SI{16}{\percent} biotite and \SI{10}{\percent} muscovite, while GEOCHEM is described as quartz and
+muscovite of phyllic alteration) and because pXRF underestimates light elements. With calibration (B) or as
+features (C), the mineral route reaches a mean skill of 0.08--0.19 against 0.29, and averaging it with the spectral
+model makes the latter worse. Variants with other pre-processing (first derivative, continuum removal) or with the
+SWIR range only gave 0.03--0.21.
+
+The reason is visible in the correlations of the predicted minerals with the measured elements: almost every
+predicted mineral correlates strongly with Ca ($|r|$ up to 0.78), gypsum positively ($r = 0.74$), quartz, rutile and
+kaolinite negatively. The transferred model projects GEOCHEM onto essentially one direction, its dominant spectral
+factor (the water band), and predicted muscovite even anti-correlates with K ($r = -0.39$), although the Al--OH
+band of GEOCHEM itself follows K (\cref{tab:features}). A mineral model learned on another deposit, with another
+alteration assemblage and other sample preparation, does not carry over; a mineralogical step would need mineral
+labels from the same deposit.
+
+\begin{table}[t]
+  \centering\small
+  \caption{Mineralogy route (LOSO on GEOCHEM, mineral model trained on MINERAL1). Skill: mean over Al \ldots Cu.
+    Uncalibrated stoichiometry (route A) has large negative skills (mean $-7.4$) and is omitted.}
+  \label{tab:mineralogy}
+  \resizebox{\linewidth}{!}{\input{tables/mineralogy.tex}}
+\end{table}
+
+% =====================================================================================================================
 \section{Comparison with the reference benchmark}\label{sec:leakage}
 
 The HIDSAG paper reports for GEOCHEM a mean absolute percentage error of \SI{0.021}{\percent} for Al and below
@@ -378,6 +425,9 @@ re-implementation, not necessarily for the authors' code.
     EMSC) remove most of this distance and bring weaker models up to the best one, but do not raise the ceiling.
     Sample preparation should fix the size fraction, or the size distribution has to be measured alongside the
     spectra.
+  \item A two-step route through mineralogy learned on another HIDSAG subset (MINERAL1) does not beat the direct
+    regression (skill 0.08--0.19 against 0.29): the mineral model does not transfer between deposits. Within its
+    own deposit it predicts the SWIR-active minerals well (muscovite 0.77, biotite 0.65, chlorite 0.60).
   \item The accuracy published for HIDSAG GEOCHEM is consistent with a validation that shares samples between
     training and test, and in part with an error of scale. It cannot serve as a target.
 \end{enumerate}
@@ -392,7 +442,9 @@ predictor, and model the particle size. A physical model of the grain size (Hapk
 reflectance and a known illumination geometry; the HIDSAG subset PORPHYRY, artificial mixtures of known minerals in
 two size fractions, is the place to calibrate it. Whether the predicted composition should be an intermediate input to the
 mill variables, or the spectra should be regressed on them directly, is an open question: the errors of this first
-step would propagate into the second, which favours the direct route unless the composition adds information.
+step would propagate into the second, which favours the direct route unless the composition adds information. The
+same holds for mineralogy: it is a useful intermediate only with mineral labels from the same deposit as the
+target samples.
 
 % =====================================================================================================================
 \section*{Data and code}

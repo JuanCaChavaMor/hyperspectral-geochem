@@ -99,3 +99,13 @@ def test_hapke_inversion_roundtrip():
     from hsgeo.grainsize import hapke_reflectance, single_scattering_albedo
     w = np.array([0.3, 0.7, 0.95, 0.999])
     assert np.allclose(single_scattering_albedo(hapke_reflectance(w)), w, atol=1e-4)
+
+
+def test_stoichiometry():
+    from hsgeo.minerals import FRACTIONS, elements_from_minerals
+    assert FRACTIONS["Chalcopyrite"]["Cu"] == pytest.approx(0.346, abs=0.002)
+    assert FRACTIONS["Muscovite/Sericite"]["K"] == pytest.approx(0.098, abs=0.002)
+    for m, fr in FRACTIONS.items():
+        assert sum(fr.values()) == pytest.approx(1.0), m
+    E = elements_from_minerals(np.array([[100.0, 0.0]]), ["Quartz", "Pyrite"], ["Si", "Fe"])
+    assert E[0, 0] == pytest.approx(46.7, abs=0.1) and E[0, 1] == 0
