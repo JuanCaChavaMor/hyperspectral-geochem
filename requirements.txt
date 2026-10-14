@@ -1,0 +1,8 @@
+numpy
+scipy
+pandas
+scikit-learn
+matplotlib
+h5py
+torch        # only for the 1D-CNN
+pytest

@@ -1,0 +1,15 @@
+variant,model,n_samples,mean_skill,Ca,Fe,Cu
+baseline,PCA + ridge (raw),28,0.287,0.505,0.489,0.276
+baseline,PLS (d1),28,0.239,0.478,0.391,0.303
+grain-size centring,PCA + ridge (raw),28,0.210,0.399,0.460,0.213
+grain-size centring,PLS (d1),28,0.179,0.416,0.389,0.321
+both fractions (25 samples),PCA + ridge (raw),25,0.251,0.441,0.521,0.369
+both fractions (25 samples),PLS (d1),25,0.223,0.561,0.377,0.351
+fine only (25 samples),PCA + ridge (raw),25,0.177,0.087,0.479,0.445
+fine only (25 samples),PLS (d1),25,0.191,0.504,0.180,0.308
+coarse only (25 samples),PCA + ridge (raw),25,0.054,0.176,0.187,0.249
+coarse only (25 samples),PLS (d1),25,0.117,0.510,0.348,0.315
+1000 px per crop,PCA + ridge (raw),28,0.280,0.494,0.509,0.274
+1000 px per crop,PLS (d1),28,0.223,0.472,0.396,0.300
+"1000 px, tray masked",PCA + ridge (raw),28,0.259,0.457,0.501,0.282
+"1000 px, tray masked",PLS (d1),28,0.232,0.495,0.387,0.249

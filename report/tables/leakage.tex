@@ -1,0 +1,12 @@
+\begin{tabular}{llrrrr}
+\toprule
+model & split & skill & \multicolumn{3}{c}{MAPE [\%]: Al, Ca, Cu} \\
+\midrule
+PLS & random patches (80/20) & +0.46 & 2.43 & 12.5 & 6.6 \\
+PLS & leave one crop out & +0.38 & 2.78 & 13.6 & 7.6 \\
+PLS & leave one sample out & +0.26 & 3.38 & 15.4 & 9.2 \\
+cluster + PLS (HIDSAG-like) & random patches (80/20) & +0.43 & 2.70 & 14.5 & 6.6 \\
+cluster + PLS (HIDSAG-like) & leave one crop out & +0.33 & 3.20 & 16.9 & 7.5 \\
+cluster + PLS (HIDSAG-like) & leave one sample out & +0.22 & 3.79 & 19.1 & 8.6 \\
+\bottomrule
+\end{tabular}
