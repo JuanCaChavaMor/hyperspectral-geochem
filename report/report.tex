@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{float}
 \usepackage{siunitx}
 \usepackage{microtype}
 \usepackage{xcolor}
@@ -26,8 +27,9 @@
 \maketitle
 
 \begin{abstract}
-A hyperspectral camera above the feed belt of a semi-autogenous grinding (SAG) mill could report the composition of
-the ore before it enters the mill. We test this idea on the public HIDSAG GEOCHEM data set \citep{Ehrenfeld2023}:
+The feed of a semi-autogenous grinding (SAG) mill is characterised by sampling batches of ore and analysing them in
+the laboratory; hyperspectral imaging of such samples could estimate their composition faster and at lower cost than
+chemical assays. We test this idea on the public HIDSAG GEOCHEM data set \citep{Ehrenfeld2023}:
 28 samples of porphyry copper ore, imaged in the visible to short-wave infrared (\SIrange{400}{2500}{nm}) and assayed
 for 18 elements by portable X-ray fluorescence. Because every image of a sample carries the same label, the only
 honest test is on samples the model has never seen. Under this test, a principal-component ridge regression on the
@@ -42,10 +44,13 @@ any split of the data that we tried. Code and data: \citet{Repo}.
 % =====================================================================================================================
 \section{Motivation}
 
-The throughput and the energy consumption of a SAG mill depend on properties of its feed that are measured, at best,
-once per shift: hardness, moisture, clay content. Geometallurgy links these properties to the mineralogy and the
-chemistry of the ore. If the chemistry could be estimated continuously from a camera above the feed belt, it could
-serve as an input to models of the mill. This report is the first step of that chain: \emph{how well can hyperspectral
+The throughput and the energy consumption of a SAG mill depend on properties of its feed such as hardness, moisture
+and clay content. These properties are not observed continuously: batches of ore are sampled, and each sample is
+characterised by a set of estimation techniques, from chemical assays to metallurgical tests. Geometallurgy links
+the results to the mineralogy and the chemistry of the ore. Among these techniques, reflectance spectroscopy is fast,
+non-destructive and cheap per sample; if it can estimate the chemistry of a sampled batch, it can complement or
+partly replace slower assays, and its estimates can serve as inputs to models of the mill. This report is the first
+step of that chain: \emph{how well can hyperspectral
 images predict the chemical composition of an ore sample?} The second step, from composition and spectra to the
 variables of the mill, is outside its scope; it is discussed briefly in \cref{sec:next}.
 
@@ -59,7 +64,7 @@ re-analysis that asks three questions the notebook did not ask:
 \end{enumerate}
 
 % =====================================================================================================================
-\section{Data}\label{sec:data}
+\section{Materials}\label{sec:data}
 
 HIDSAG \citep{Ehrenfeld2023,HIDSAGdata} contains five subsets of geometallurgical samples from Chilean copper
 deposits, each imaged with two push-broom cameras: a VNIR camera (942 bands, \SIrange{400}{1000}{nm}) and a SWIR
@@ -134,8 +139,8 @@ band generalises poorly (\cref{sec:results}).
 important result of this section. For the water band at \SI{1935}{nm} and the Al--OH band at \SI{2205}{nm}, the
 coarse fraction of a sample absorbs more than its fine fraction by 3.5 times the standard deviation between samples,
 consistently in all 25 pairs. This is the expected physics (longer optical paths in larger grains), but it means that
-a feature extracted from an image depends more on the particle size distribution than on the composition. On a
-conveyor belt, where the size distribution varies, this effect has to be modelled or measured.
+a feature extracted from an image depends more on the particle size distribution than on the composition. Unless the
+sample preparation fixes the size fraction, this effect has to be modelled or measured.
 
 \paragraph{Not every pixel is ore.} \Cref{fig:maps} maps the band depths pixel by pixel for two samples and clusters
 the continuum-removed SWIR spectra of all pixels with $k$-means. One cluster has absorptions at 1210, 1730 and
@@ -251,7 +256,7 @@ informative than the coarse one, and using both is best.
 \end{table}
 
 % =====================================================================================================================
-\section{Why the published accuracy cannot be reproduced}\label{sec:leakage}
+\section{Comparison with the reference benchmark}\label{sec:leakage}
 
 The HIDSAG paper reports for GEOCHEM a mean absolute percentage error of \SI{0.021}{\percent} for Al and below
 \SI{0.3}{\percent} for all nine major elements with the full spectral range, obtained with ``leave-one-out rounds''
@@ -266,6 +271,12 @@ MAPE close to the SWIR-only column of the paper. No split brings it near the ful
 of magnitude below the SWIR column of the same table. We conclude that the published GEOCHEM numbers were most
 likely obtained with a split that shares samples between training and test, and that the full-range column in
 addition contains an error of units or scale. They should not be used as a benchmark.
+
+Under the same sample-wise protocol, the comparison is in favour of simpler models: our approximation of the
+reference pipeline (cluster + PLS) reaches a skill of 0.22 on patches, a single PLS 0.26 and PCA + ridge on crop means
+0.29 (\cref{tab:benchmark}). The approximation differs from the original in its details (the original uses a
+probabilistic clustering, stochastic patch selection and ordinary least squares), so this ranking holds for our
+re-implementation, not necessarily for the authors' code.
 
 \begin{table}[t]
   \centering\small
@@ -291,31 +302,62 @@ addition contains an error of units or scale. They should not be used as a bench
 \end{figure}
 
 % =====================================================================================================================
-\section{Lessons from the course notebook}\label{sec:lessons}
+\section{Main changes}\label{sec:lessons}
 
-The first version of the project made four mistakes that are common in applied machine learning and worth stating:
-\begin{itemize}
-  \item \textbf{It used 28 spectra out of about \num{1e6}.} One mean spectrum per sample discarded the crops, the
-    size fractions and all spatial information. The re-analysis keeps all 106 crops and samples their pixels.
-  \item \textbf{It split at random and had no baseline.} A random split of crops or patches measures recognition of
-    a sample. Without the mean predictor as a reference, an error of a few percent looks good although it is the
-    natural spread of the data.
-  \item \textbf{It chose the model before looking at the data.} With 28 labels, a CNN is not justified; on the honest
-    split it was worse than the mean predictor. A linear model with an inner, grouped choice of its complexity is
-    the right starting point.
-  \item \textbf{It did not look at the images.} The tray pixels and the grain-size effect are visible in a band-depth
-    map in a few minutes, and they are the main obstacles for an application on a belt.
-\end{itemize}
+\Cref{tab:changes} lists the main modifications with respect to the original course notebook.
+
+\begin{table}[H]
+  \centering\small
+  \caption{Main changes with respect to the original notebook.}
+  \label{tab:changes}
+  \begin{tabular}{p{0.2\linewidth}p{0.34\linewidth}p{0.36\linewidth}}
+    \toprule
+    & original notebook & this version \\
+    \midrule
+    Data used & one mean spectrum per sample (28 spectra) & all 106 crops, both size fractions, 1000 pixels per
+      crop; patches of 25 pixels \\
+    Spectral features & -- & VNIR binned to \SI{10}{nm}, noisy band edges removed;
+      SNV, derivatives, continuum removal, band depths \\
+    Validation & random split & leave one sample out, inner cross-validation grouped by sample, permutation test \\
+    Reference & none & mean predictor; skill and $Q^2$ relative to it \\
+    Models & 1D-CNN & PLS, PCA + ridge, cluster + PLS (reference pipeline), best band, 1D-CNN \\
+    Interpretation & -- & absorption features, correlation spectra, pixel maps \\
+    Artefacts & not examined & grain size, tray pixels, sensor striping quantified and tested \\
+    Comparison with literature & published accuracy taken at face value & same models under leaky and honest
+      splits \\
+    Report & Jupyter notebook & this report, scripts for every table and figure, tests \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 % =====================================================================================================================
-\section{Next step: towards the variables of the SAG mill}\label{sec:next}
+\section{Further work and conclusions}\label{sec:next}
 
-For the SAG mill, what matters is not the composition itself but hardness, grindability and moisture. The HIDSAG
-subset GEOMET contains 146 drill-core samples with the Bond work index, copper and molybdenum recoveries and other
-metallurgical tests, imaged with the same cameras. It is the natural continuation, with three lessons from this work:
-validate by sample (or by drill hole), report the skill with respect to the mean predictor, and model the particle
-size, since it changes the spectra more than the mineralogy does. On a real belt, moisture would have to be measured
-or corrected as well, because the water bands are among the most informative features here.
+\paragraph{Conclusions.}
+\begin{enumerate}
+  \item Hyperspectral images of a sampled batch carry real but limited information about its chemistry. On samples
+    not seen in training, the best model removes \SI{29}{\percent} of the error of the mean predictor on average,
+    about half for Ca and Fe, about a third for K, S, Al and Cu, and little for Si, P and Ti. All skills are
+    significant in a permutation test.
+  \item The camera measures minerals. Elements are predictable when they reside in minerals with absorptions in
+    the VNIR--SWIR range (Al and K in muscovite) or co-vary with them (Cu with alteration).
+  \item With 28 labelled samples, regularised linear models are the right tools; a convolutional network and a
+    clustering pipeline add variance, not skill. More pixels per sample do not compensate for few samples.
+  \item Grain size changes the absorption depths more than composition does. Sample preparation should fix the
+    size fraction, or the size distribution has to be measured alongside the spectra.
+  \item The accuracy published for HIDSAG GEOCHEM is consistent with a validation that shares samples between
+    training and test, and in part with an error of scale. It cannot serve as a target.
+\end{enumerate}
+
+\paragraph{Further work.} For the SAG mill, what matters is not the composition itself but hardness, grindability
+and moisture. The HIDSAG subset GEOMET contains 146 drill-core samples with the Bond work index, copper and
+molybdenum recoveries and other metallurgical tests, imaged with the same cameras. There, the reference pipeline was
+validated on 21 samples held out from training \citep{Ehrenfeld2023}, i.e.\ by sample: its GEOMET results are a
+legitimate baseline, and the natural starting point of the next phase, unlike its GEOCHEM results. Three lessons
+carry over from this work: validate by sample (or by drill hole), report the skill with respect to the mean
+predictor, and model the particle size. Whether the predicted composition should be an intermediate input to the
+mill variables, or the spectra should be regressed on them directly, is an open question: the errors of this first
+step would propagate into the second, which favours the direct route unless the composition adds information.
 
 % =====================================================================================================================
 \section*{Data and code}

@@ -1,7 +1,7 @@
 # Ore geochemistry from hyperspectral images: an honest baseline on HIDSAG
 
-Can a hyperspectral camera above a conveyor belt tell the chemical composition of the ore that feeds a SAG
-mill? This repository answers the question for the public **HIDSAG GEOCHEM** data set
+The ore that feeds a SAG mill is characterised by sampling batches and analysing them. Can hyperspectral images
+of such a sample tell its chemical composition? This repository answers the question for the public **HIDSAG GEOCHEM** data set
 (28 samples of porphyry copper ore, VNIR + SWIR images, 18 elements by pXRF), with a validation that a mine
 could trust: every number is measured on samples the model has never seen.
 
