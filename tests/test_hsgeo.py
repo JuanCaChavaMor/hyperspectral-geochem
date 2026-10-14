@@ -84,3 +84,18 @@ def test_models_recover_linear_signal(M):
     _, P, Ys = cross_predict(M, d, X)
     sk = metrics(P, Ys)["skill"]
     assert sk[0] > 0.3
+
+
+def test_epo_removes_size_direction(ds):
+    from hsgeo.grainsize import _pair_differences, epo
+    tr = np.ones(len(ds), bool)
+    Z = epo(2)(ds.X.astype(float), ds, tr)
+    D = _pair_differences(ds.X.astype(float), ds, tr)
+    V = np.linalg.svd(D, full_matrices=False)[2][:2]
+    assert np.abs(Z @ V.T).max() < 1e-8
+
+
+def test_hapke_inversion_roundtrip():
+    from hsgeo.grainsize import hapke_reflectance, single_scattering_albedo
+    w = np.array([0.3, 0.7, 0.95, 0.999])
+    assert np.allclose(single_scattering_albedo(hapke_reflectance(w)), w, atol=1e-4)

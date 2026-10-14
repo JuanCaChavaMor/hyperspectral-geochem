@@ -248,6 +248,36 @@ spectra per size fraction; the linear models already learn to ignore the grain-s
 are in the training set, and the centring removes some useful information. The fine fraction alone is more
 informative than the coarse one, and using both is best.
 
+\paragraph{Grain-size models.} Because grain size dominates the absorption depths, we tested the corrections
+proposed for it in chemometrics and in planetary spectroscopy (\cref{tab:grainsize}): fixed transforms of the
+reflectance (pseudo-absorbance $\log 1/R$, Kubelka--Munk, and $u/\log(1+u)$ with $u = \log 1/R$ of
+\citealp{Aucott1988}); corrections fitted on the fine/coarse pairs of the training samples of each fold, namely
+external parameter orthogonalisation (EPO, \citealp{Roger2003}), which projects out the subspace spanned by the
+coarse $-$ fine differences, and EMSC with the mean difference as interferent \citep{Martens1991}; and a physical
+model, Hapke's radiative transfer \citep{Hapke2012}, which converts reflectance to single-scattering albedo, and its
+equivalent-slab model, in which the internal transmission of a grain is $\exp(-\alpha D)$. In $\log(\alpha D) =
+\log\alpha + \log D$, the grain size $D$ becomes an additive constant per spectrum and cancels by centring.
+
+The \emph{invariance index} measures the result: the distance between the fine and the coarse fraction of a
+sample divided by the mean distance between two samples (bands standardised). For the raw spectra it is 2.5: the
+two fractions of one sample are further apart than two different samples. The paired corrections reduce it to
+0.7--0.9, the Hapke transform to 1.8, SNV to 1.4. Prediction improves less than invariance. $\log 1/R$ raises the
+skill of PCA + ridge from 0.29 to 0.31 (better for 19 of 28 samples, Wilcoxon $p = 0.03$), and EPO with three
+components raises PLS from 0.20 to 0.29 (20 of 28, $p = 0.01$), i.e.\ to the level of the best model, not beyond.
+Given the number of variants tried, these gains are modest. The Hapke route fails for a practical reason: it needs
+an absolute reflectance factor and the illumination geometry, and HIDSAG provides neither (the values exceed 1); its
+skill collapses when the assumed reflectance level changes by \SI{20}{\percent}.
+
+\begin{table}[t]
+  \centering\small
+  \caption{Grain-size corrections (LOSO). Invariance: fine--coarse distance of a sample relative to the mean
+    distance between samples (0: size leaves no trace). Paired corrections (EPO, EMSC) are fitted in every fold on
+    the training samples only. The last two rows vary the assumed absolute reflectance level of the Hapke
+    inversion.}
+  \label{tab:grainsize}
+  \resizebox{\linewidth}{!}{\input{tables/grain_size.tex}}
+\end{table}
+
 \begin{table}[t]
   \centering\small
   \caption{Robustness checks (LOSO, mean skill over Al \ldots Cu and skill of three elements).}
@@ -343,8 +373,11 @@ re-implementation, not necessarily for the authors' code.
     the VNIR--SWIR range (Al and K in muscovite) or co-vary with them (Cu with alteration).
   \item With 28 labelled samples, regularised linear models are the right tools; a convolutional network and a
     clustering pipeline add variance, not skill. More pixels per sample do not compensate for few samples.
-  \item Grain size changes the absorption depths more than composition does. Sample preparation should fix the
-    size fraction, or the size distribution has to be measured alongside the spectra.
+  \item Grain size changes the absorption depths more than composition does: the two size fractions of a sample
+    are further apart in spectral space than two different samples. Corrections fitted on fine/coarse pairs (EPO,
+    EMSC) remove most of this distance and bring weaker models up to the best one, but do not raise the ceiling.
+    Sample preparation should fix the size fraction, or the size distribution has to be measured alongside the
+    spectra.
   \item The accuracy published for HIDSAG GEOCHEM is consistent with a validation that shares samples between
     training and test, and in part with an error of scale. It cannot serve as a target.
 \end{enumerate}
@@ -355,7 +388,9 @@ molybdenum recoveries and other metallurgical tests, imaged with the same camera
 validated on 21 samples held out from training \citep{Ehrenfeld2023}, i.e.\ by sample: its GEOMET results are a
 legitimate baseline, and the natural starting point of the next phase, unlike its GEOCHEM results. Three lessons
 carry over from this work: validate by sample (or by drill hole), report the skill with respect to the mean
-predictor, and model the particle size. Whether the predicted composition should be an intermediate input to the
+predictor, and model the particle size. A physical model of the grain size (Hapke) requires calibrated absolute
+reflectance and a known illumination geometry; the HIDSAG subset PORPHYRY, artificial mixtures of known minerals in
+two size fractions, is the place to calibrate it. Whether the predicted composition should be an intermediate input to the
 mill variables, or the spectra should be regressed on them directly, is an open question: the errors of this first
 step would propagate into the second, which favours the direct route unless the composition adds information.
 

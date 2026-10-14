@@ -21,12 +21,14 @@ def tag_centre(X, tag, tr):
     return Xc
 
 
-def cross_predict(make_model, ds, X, protocol="sample", seed=0, centre_tags=False):
+def cross_predict(make_model, ds, X, protocol="sample", seed=0, centre_tags=False, fold_transform=None):
     """Out-of-fold predictions, aggregated to one prediction per sample (mean over its rows).
 
     protocol: "sample" (leave-one-sample-out), "crop" (leave-one-crop-out) or "random" (80/20 row split,
     repeated so that every row is predicted once: 5 folds of a shuffled index).
     centre_tags: apply `tag_centre` inside every fold.
+    fold_transform: f(X, ds, train_mask) -> X', a correction fitted on the training rows of each fold only
+        (e.g. the grain-size corrections of `hsgeo.grainsize`).
     """
     P = np.full_like(ds.Y, np.nan)
     if protocol in ("sample", "crop"):
@@ -42,6 +44,9 @@ def cross_predict(make_model, ds, X, protocol="sample", seed=0, centre_tags=Fals
         if centre_tags:
             m = np.zeros(len(X), bool); m[tr] = True
             Xf = tag_centre(X, ds.tag, m)
+        if fold_transform is not None:
+            m = np.zeros(len(X), bool); m[tr] = True
+            Xf = fold_transform(Xf, ds, m)
         P[te] = make_model().fit(Xf[tr], ds.Y[tr], ds.sample[tr]).predict(Xf[te])
     return per_sample(P, ds)
 

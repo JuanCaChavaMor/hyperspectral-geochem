@@ -95,3 +95,15 @@ rows = [f"{k} & " + " & ".join(f(c.loc[k, e]) for e in ["Al", "K", "S", "Ca", "F
 write("features", tab("l" + "r" * 8, r"& \multicolumn{6}{c}{correlation with element (28 samples)} & "
       r"\multicolumn{2}{c}{variation} \\ \cmidrule(lr){2-7}\cmidrule(lr){8-9}"
       "\nfeature & Al & K & S & Ca & Fe & Cu & between samples (sd) & coarse $-$ fine", rows))
+
+# ---------------------------------------------------------------- grain-size corrections
+if (RES / "grain_size.csv").exists():
+    g = pd.read_csv(RES / "grain_size.csv")
+    rows = []
+    for _, v in g.iterrows():
+        if v.representation in ("SNV of log(1/R)", "EPO k=2 on raw", "EPO k=2 on log(1/R)"):
+            continue
+        rows.append(f"{v.representation.replace('alpha', '$\\alpha$').replace('scale x', 'scale $\\times$').replace('scale ×', 'scale $\\times$')} & {v.invariance:.2f} & "
+                    f"{f(v['skill PCA + ridge'])} & {f(v['skill PLS'])} & {f(v.Ca)} & {f(v.Fe)} & {f(v.Cu)} \\\\")
+    write("grain_size", tab("lrrrrrr", r"representation & invariance & \multicolumn{2}{c}{skill} & \multicolumn{3}{c}{PCA + ridge} \\ "
+          r"\cmidrule(lr){3-4}\cmidrule(lr){5-7}" "\n& & PCA + ridge & PLS & Ca & Fe & Cu", rows))

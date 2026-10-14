@@ -19,6 +19,7 @@ accuracy survives an honest split. The executive report is [`report/report.pdf`]
 | **Leakage** | All crops and pixels of a sample share one label. The same PLS model scores a skill of 0.46 with random patch splits, 0.39 leaving one crop out and 0.26 leaving one sample out: a leaky split lets the model recognise the sample instead of predicting its chemistry. |
 | **Published numbers** | The MAPE of 0.02 % for Al reported for GEOCHEM in the HIDSAG paper is two orders of magnitude below anything a sample-wise validation gives (3.1 %; the mean predictor already gives 4.5 %). |
 | **What the camera sees** | Minerals, not elements: Al and K follow the Al-OH band of muscovite at 2205 nm, Ca the molecular-water band at 1935 nm. Cu has no absorption of its own and is predicted through the alteration minerals that accompany it. |
+| **Grain-size models** | Tested: log(1/R), Kubelka-Munk, Aucott, EPO and EMSC fitted on fine/coarse pairs, Hapke radiative transfer. EPO cuts the fine-coarse distance from 2.5x to 0.7x the between-sample distance and lifts PLS from 0.20 to 0.29 (p = 0.01); log(1/R) lifts PCA + ridge to 0.31. Hapke needs calibrated absolute reflectance, which HIDSAG lacks. (`scripts/grain_size.py`) |
 | **Artefacts** | Grain size changes the absorption depths more than composition does (coarse crops absorb more than fine crops of the same sample by 3.5x the sample-to-sample spread), and up to 16 % of a crop's pixels are the plastic tray. Neither correction improves the model, which is a useful negative result. |
 
 ![skill](figures/skill.png)
@@ -47,6 +48,7 @@ pytest -q
 python scripts/spectral_analysis.py       # spectra, correlation spectrum, grain-size variance   (~20 s)
 python scripts/run_benchmark.py           # leave-one-sample-out benchmark                       (~3 min)
 python scripts/permutation_test.py --n 100  # p-values of the skill                               (~1 h)
+python scripts/grain_size.py               # grain-size corrections                              (~5 min)
 python scripts/make_figures.py
 ```
 
